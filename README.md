@@ -24,3 +24,5 @@ https://github.com/ReactiveX/RxJava
 agenda支持以下功能点：
 1. 问答对是多对多关系
 
+agenda依赖的基础库
+google guava http://ifeve.com/google-guava/
