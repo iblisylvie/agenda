@@ -1,0 +1,122 @@
+// Copyright 2016 Leyantech Ltd. All Rights Reserved.
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "ai.iblis.agenda";
+
+package agenda;
+
+enum TurnStatus {
+  INVALID_TURN_STATUS = 0;
+  TURN_START = 1;
+  TURN_MIDDLE = 2;
+  TURN_END = 3;
+}
+
+enum ConversationStatus {
+  INVALID_CONVERSATION_STATUS = 0;
+  CONVERSATION_START = 1;
+  CONVERSATION_MIDDLE = 2;
+  CONVERSATION_END = 3;
+}
+
+message Agent {
+  string name = 1;
+  string alias = 2;
+  string type = 3;  // agent / agency / etc.
+
+  repeated Concept concept = 4;
+  string precondition = 5;
+  string succeeds_when = 6;
+  string triggered_when = 7;
+  repeated string sub_agent = 8;
+  int32 max_retry = 9;
+  int32 timeout = 10;
+  int32 retry_interval = 11;
+  bool is_main_topic = 13;
+  enum DialogueExecutionReturnCode {
+    DERC_CONTINUE_EXECUTION = 0;  // This is the default.
+    DERC_WAIT_FOR_EVENT = 1;
+    DERC_FINISH_DIALOGUE = 2;
+  }
+  DialogueExecutionReturnCode derc = 14;
+  int32 max_attempts = 15;
+  string ground_agent = 16;
+  string on_completion = 17;
+  string on_execution = 18;
+  string on_failure = 19;  // if agent failed to do things, usually execute_agent fill this field.
+  string on_success = 20;  // if agent succeed to do things, usually execute_agent fill this field.
+  repeated string concept_from_topic = 21;  // concepts defined implicitly by topic, i.e all the slots are the concepts we need.
+  repeated string exec_trace = 22;  // 记录该agent的执行历史，每一次执行时的执行参数。
+  string task = 23;  // TASK_AGENCY需要填此参数。
+  int32 priority = 24;
+  bool grounded = 25;  // if this agent use ground agent to proceeds error.
+  bool blocked = 26;  // if this is true, then agent is blocked from execution.
+
+  enum AgentStatus {
+    AS_TO_BE_SCHEDULED = 0;  // to be scheduled.
+    AS_SCHEDULED = 1;  // This agent is scheduled but not executed yet.
+    AS_EXECUTING = 2;  // This agent is being executed.
+    AS_EXECUTED = 3;  // This agent is executed at least once.
+  }
+  AgentStatus status = 27;
+
+  enum AgentScope {
+    AGENT_SCOPE_CONVERSATION = 0;  // 该agent的执行以conversation为界，conversation结束，对所有该scope的agent进行重置
+    AGENT_SCOPE_TURN = 1;  // 该agent的执行以turn为界，turn结束之后，对所有该scope的agent进行重置
+  }
+  AgentScope scope = 28;
+}
+
+
+message Concept {
+  Slot slot = 1;
+  bool updated = 2;
+  bool visible_for_main_topic = 3;  // visible for its parent and its siblings and its siblings descendants.
+  int64 updated_time = 4;  // time this concept is updated.
+  TimeSpan valid_thr = 5;  // time span that this concept is valid.
+  bool trade_specific = 6;  // 该concept是否和订单相关
+  repeated string trade_id = 7;  // 和该concept相关的trade
+}
+
+message TimeSpan {
+  int64 start_at = 1;  // System.currentTimeMillis()
+  int64 end_at = 2;  // System.currentTimeMillis()
+}
+
+message Slot {
+  string name = 1;
+  string alias = 2;
+  string value = 3;
+  string normed_value = 4;
+  double score = 5;
+  bool obligatory = 6;
+  int32 begin_index = 7;  // This index is based on the norm query in bundle
+  int32 end_index = 8;  // This index is based on the norm query in bundle
+  EntryType type = 9;  // either this type is time, number of null.
+}
+
+
+enum EntryType {
+  ENTRY_NO_TYPE = 0;
+  TIME = 1;
+  NUMBER = 2;
+  URL = 3;
+  LOCATION = 4;
+  EMAIL = 5;
+  EXPRESS = 6;
+  PERSON = 7;
+  EMOTION_ICON = 8;
+  ZHUBO_NAME = 9;
+}
+
+
+message DTT {
+  string name = 1;
+  string root_agent = 2;
+  string domain = 3;
+  repeated Agent agent = 4;
+  repeated string import = 5;  // import agent definition from other resource uri.
+  repeated Concept concept = 6;
+}
